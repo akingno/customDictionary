@@ -13,7 +13,7 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    setFixedSize(500, 300);
+    setFixedSize(550, 300);
 
     createShortcuts();
 
@@ -23,7 +23,16 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->btn_add, &QPushButton::clicked,
             this, &MainWindow::addWord);
 
+    recent_word_model = new QStringListModel(this);
+    ui->added_word_list->setModel(recent_word_model);
+    ui->added_word_list->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
+    connect(recent_word_model, &QAbstractItemModel::rowsInserted,
+        this, [this](const QModelIndex &parent, int first, int last) {
+    Q_UNUSED(parent);
+    Q_UNUSED(last);
+    ui->added_word_list->scrollTo(recent_word_model->index(first),
+                                  QAbstractItemView::PositionAtTop);});
 
     loadDictionary();
 }
@@ -135,6 +144,7 @@ void MainWindow::addWord()
         statusBar()->showMessage(u8"❌ 输入为空，添加失败", 3000);
         return;
     }
+    //如果单词有重复
     if (akn_set_.count(akn) > 0) {
         // 使用对话框询问用户是否继续添加
         auto reply = QMessageBox::question(
@@ -157,6 +167,16 @@ void MainWindow::addWord()
     saveDictionary();
     statusBar()->showMessage(u8"✅ 添加成功", 2000);
 
+    // 添加进最近添加栏
+    QString combined = cnQ + " – " + aknQ;
+    recent_list.prepend(combined);
+
+    if (recent_list.size() > MAX_RECENT)
+        recent_list.removeLast();
+
+    recent_word_model->setStringList(recent_list);
+
+    // 清除输入
     ui->word_cn->clear();
     ui->word_akn->clear();
 }

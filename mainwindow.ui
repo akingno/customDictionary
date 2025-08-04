@@ -17,17 +17,36 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>翻译添加器</string>
+   <string>自定义词典查询添加器v1.0.2</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QVBoxLayout" name="verticalLayout_2">
+   <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="1,3">
+    <property name="spacing">
+     <number>5</number>
+    </property>
+    <property name="leftMargin">
+     <number>5</number>
+    </property>
+    <property name="topMargin">
+     <number>5</number>
+    </property>
+    <property name="rightMargin">
+     <number>5</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
     <item>
-     <layout class="QVBoxLayout" name="verticalLayout" stretch="1,2,1,2">
+     <widget class="QListView" name="added_word_list"/>
+    </item>
+    <item>
+     <layout class="QVBoxLayout" name="verticalLayout" stretch="1,2,1,3">
       <item>
        <widget class="QLabel" name="label_3">
         <property name="font">
          <font>
           <pointsize>11</pointsize>
+          <bold>true</bold>
          </font>
         </property>
         <property name="text">
@@ -51,7 +70,7 @@
            </font>
           </property>
           <property name="placeholderText">
-           <string>输入想翻译的中文</string>
+           <string>输入想翻译的中文词汇</string>
           </property>
          </widget>
         </item>
@@ -90,7 +109,7 @@
           </property>
           <property name="font">
            <font>
-            <pointsize>10</pointsize>
+            <pointsize>12</pointsize>
            </font>
           </property>
           <property name="text">
@@ -105,6 +124,7 @@
         <property name="font">
          <font>
           <pointsize>11</pointsize>
+          <bold>true</bold>
          </font>
         </property>
         <property name="text">
@@ -122,7 +142,7 @@
            </font>
           </property>
           <property name="placeholderText">
-           <string>输入中文单词</string>
+           <string>输入中文词汇</string>
           </property>
          </widget>
         </item>
