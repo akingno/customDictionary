@@ -6,7 +6,7 @@
 #include <QJsonObject>
 #include <QJsonValue>
 #include <QJsonParseError>
-#include <iomanip>
+#include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -15,11 +15,15 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     setFixedSize(500, 300);
 
+    createShortcuts();
+
     connect(ui->btn_translate, &QPushButton::clicked,
             this, &MainWindow::translateWord);
 
     connect(ui->btn_add, &QPushButton::clicked,
             this, &MainWindow::addWord);
+
+
 
     loadDictionary();
 }
@@ -27,6 +31,34 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::createShortcuts()            // NEW
+{
+    sc_to_right = new QShortcut(this);
+    sc_to_left  = new QShortcut(this);
+    sc_enter = new QShortcut(this);
+
+    sc_to_right->setKey(QKeySequence(Qt::CTRL | Qt::Key_BracketRight));
+    sc_to_left ->setKey(QKeySequence(Qt::CTRL | Qt::Key_BracketLeft));
+    sc_enter   ->setKey(QKeySequence(Qt::CTRL | Qt::Key_Backslash));
+
+
+    sc_to_right->setAutoRepeat(false);
+    sc_to_left ->setAutoRepeat(false);
+    sc_enter ->setAutoRepeat(false);
+    // Ctrl + → : 中文 → 外文
+
+    connect(sc_to_right, &QShortcut::activated, this,
+            [this]{ ui->word_akn->setFocus(); });
+
+    // Ctrl + ← : 外文 → 中文
+
+    connect(sc_to_left, &QShortcut::activated, this,
+            [this]{ ui->word_cn->setFocus(); });
+
+    connect(sc_enter, &QShortcut::activated, this,
+            &MainWindow::addWord);
 }
 
 void MainWindow::loadDictionary()
@@ -47,7 +79,11 @@ void MainWindow::loadDictionary()
 
     const QJsonObject obj = doc.object();
     for (auto it = obj.constBegin(); it != obj.constEnd(); ++it) {    // 遍历键值对
-        dict_[it.key().toStdString()] = it.value().toString().toStdString();
+        const std::string cn  = it.key().toStdString();
+        const std::string akn = it.value().toString().toStdString();
+        dict_[cn] = akn;
+        cn_set_.insert(cn);
+        akn_set_.insert(akn);
     }
     statusBar()->showMessage(u8"读取完成", 3000);
 }
@@ -81,21 +117,43 @@ void MainWindow::translateWord()
         statusBar()->showMessage(u8"✅ 找到翻译", 2000);
     } else {
         ui->label_output->setText(u8"未找到");
-        ui->word_cn->setText(cn);                        // auto‑fill for quick add
+        // 当未找到时, 添加如添加框方便添加
+        ui->word_cn->setText(cn);
         statusBar()->showMessage(u8"⚠️ 未找到，已填入添加框", 3000);
     }
 }
 
 void MainWindow::addWord()
 {
-    const QString cn  = ui->word_cn->text().trimmed();
-    const QString akn = ui->word_akn->text().trimmed();
-    if (cn.isEmpty() || akn.isEmpty()) {
+    const QString  cnQ  = ui->word_cn->text().trimmed();
+    const QString  aknQ = ui->word_akn->text().trimmed();
+
+    std::string cn  = cnQ .toStdString();
+    std::string akn = aknQ.toStdString();
+
+    if (cn.empty() || akn.empty()) {
         statusBar()->showMessage(u8"❌ 输入为空，添加失败", 3000);
         return;
     }
+    if (akn_set_.count(akn) > 0) {
+        // 使用对话框询问用户是否继续添加
+        auto reply = QMessageBox::question(
+            this,
+            tr("此单词已存在"),
+            tr("此单词 \"%1\" 已在字典中，是否仍要添加？")
+                .arg(aknQ),
+            QMessageBox::Yes | QMessageBox::No,
+            QMessageBox::No);
+        if (reply != QMessageBox::Yes) {
+            // 用户选择不继续添加
+            statusBar()->showMessage(u8"⛔ 已取消添加", 3000);
+            return;
+        }
+    }
 
-    dict_[cn.toStdString()] = akn.toStdString();         // O(1) update, unordered_map :contentReference[oaicite:6]{index=6}
+    dict_[cn] = akn;
+    cn_set_.insert(cn);
+    akn_set_.insert(akn);
     saveDictionary();
     statusBar()->showMessage(u8"✅ 添加成功", 2000);
 
