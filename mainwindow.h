@@ -6,6 +6,7 @@
 #include <unordered_set>
 #include <QShortcut>
 #include <string>
+#include <QStringListModel>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -34,6 +35,10 @@ private:
     QShortcut * sc_to_right;
     QShortcut * sc_to_left;
     QShortcut * sc_enter;
+
+    QStringListModel * recent_word_model = nullptr;
+    QStringList recent_list;
+    const int MAX_RECENT = 15;
 
     void loadDictionary();
     void saveDictionary() const;
